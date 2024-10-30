@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Food Recognition</title>
+</head>
+<body>
+    <h1>Capture live photo</h1>
+    <video id="video" width="150" height="150" autoplay></video>
+    <button id="snap">Take Snapshot</button>
+    <canvas id="canvas" width="800" height="800" style="display: none;"></canvas>
+    <h2>Result</h2>
+    <img id="result" alt="Result will appear here">
+
+    <script>
+        // Access the device camera
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const snapButton = document.getElementById('snap');
+        const resultImage = document.getElementById('result');
+
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+            })
+            .catch(console.error);
+
+        // Capture and send the image
+        snapButton.addEventListener('click', () => {
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            const dataUrl = canvas.toDataURL('image/jpeg');
+            const base64Image = dataUrl.split(',')[1];
+
+            fetch('http://192.168.2.10:5000/predict', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ image: base64Image })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Display the received image with label
+                resultImage.src = 'data:image/jpeg;base64,' + data.image;
+            })
+            .catch(console.error);
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!--<!DOCTYPE html>-->
+<!--<html lang="en">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <meta name="viewport" content="width=device-width, initial-scale=1.0">-->
+<!--    <title>Food Recognition</title>-->
+<!--</head>-->
+<!--<body>-->
+<!--    <h1>Capture live photo</h1>-->
+<!--    <video id="video" width="150" height="150" autoplay></video>-->
+<!--    <button id="snap">Take Snapshot</button>-->
+<!--    <canvas id="canvas" width="800" height="600" style="display: none;"></canvas>-->
+<!--    <h2>Result</h2>-->
+<!--    <img id="result" alt="Result will appear here">-->
+
+<!--    <script>-->
+<!--        // Access the device camera-->
+<!--        const video = document.getElementById('video');-->
+<!--        const canvas = document.getElementById('canvas');-->
+<!--        const snapButton = document.getElementById('snap');-->
+<!--        const resultImage = document.getElementById('result');-->
+
+<!--        navigator.mediaDevices.getUserMedia({ video: true })-->
+<!--            .then(stream => {-->
+<!--                video.srcObject = stream;-->
+<!--            })-->
+<!--            .catch(console.error);-->
+
+<!--        // Function to enhance image quality-->
+<!--        function enhanceImage() {-->
+<!--            const ctx = canvas.getContext('2d');-->
+<!--            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);-->
+<!--            const data = imgData.data;-->
+
+<!--            // Sharpening filter (simple 3x3 kernel)-->
+<!--            const sharpenKernel = [-->
+<!--                [0, -1, 0],-->
+<!--                [-1, 5, -1],-->
+<!--                [0, -1, 0]-->
+<!--            ];-->
+
+<!--            const newImageData = ctx.createImageData(canvas.width, canvas.height);-->
+<!--            for (let y = 1; y < canvas.height - 1; y++) {-->
+<!--                for (let x = 1; x < canvas.width - 1; x++) {-->
+<!--                    let r = 0, g = 0, b = 0;-->
+<!--                    for (let ky = -1; ky <= 1; ky++) {-->
+<!--                        for (let kx = -1; kx <= 1; kx++) {-->
+<!--                            const pixelIndex = ((y + ky) * canvas.width + (x + kx)) * 4;-->
+<!--                            r += data[pixelIndex] * sharpenKernel[ky + 1][kx + 1];-->
+<!--                            g += data[pixelIndex + 1] * sharpenKernel[ky + 1][kx + 1];-->
+<!--                            b += data[pixelIndex + 2] * sharpenKernel[ky + 1][kx + 1];-->
+<!--                        }-->
+<!--                    }-->
+<!--                    const newIndex = (y * canvas.width + x) * 4;-->
+<!--                    newImageData.data[newIndex] = Math.min(Math.max(r, 0), 255);-->
+<!--                    newImageData.data[newIndex + 1] = Math.min(Math.max(g, 0), 255);-->
+<!--                    newImageData.data[newIndex + 2] = Math.min(Math.max(b, 0), 255);-->
+<!--                    newImageData.data[newIndex + 3] = 255; // Alpha channel-->
+<!--                }-->
+<!--            }-->
+<!--            ctx.putImageData(newImageData, 0, 0);-->
+
+<!--            // Optionally: apply contrast enhancement and color correction here-->
+
+<!--            return canvas.toDataURL('image/jpeg', 1.0); // Use high quality (1.0)-->
+<!--        }-->
+
+<!--        // Capture and send the image-->
+<!--        snapButton.addEventListener('click', () => {-->
+<!--            const context = canvas.getContext('2d');-->
+<!--            context.drawImage(video, 0, 0, canvas.width, canvas.height);-->
+
+<!--            // Enhance the image-->
+<!--            const enhancedImage = enhanceImage();-->
+
+<!--            const base64Image = enhancedImage.split(',')[1];-->
+
+<!--            fetch('http://192.168.2.10:5000/predict', {-->
+<!--                method: 'POST',-->
+<!--                headers: {-->
+<!--                    'Content-Type': 'application/json'-->
+<!--                },-->
+<!--                body: JSON.stringify({ image: base64Image })-->
+<!--            })-->
+<!--            .then(response => response.json())-->
+<!--            .then(data => {-->
+<!--                // Display the received image with label-->
+<!--                resultImage.src = 'data:image/jpeg;base64,' + data.image;-->
+<!--            })-->
+<!--            .catch(console.error);-->
+<!--        });-->
+<!--    </script>-->
+<!--</body>-->
+<!--</html>-->
